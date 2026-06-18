@@ -6,6 +6,7 @@ import {
   Shield, Lock, DollarSign,
 } from "lucide-react";
 import { tenantBilling } from "@/data/mock";
+import { useTenantsList } from "@/hooks/useTenants";
 import { useAuth } from "@/context/AuthContext";
 import { PLAN_LABELS } from "@/types";
 import type { TenantBilling, BillingStatus } from "@/types";

@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { DollarSign, Plus, Save, X, FileText, AlertTriangle, Download } from "lucide-react";
-import { receipts, alumnos, cursos } from "@/data/mock";
+import { receipts } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { PAYMENT_STATUS_LABELS, RECEIPT_TYPE_LABELS } from "@/types";
@@ -18,6 +20,8 @@ const STATUS_COLORS: Record<PaymentStatus, string> = {
 export default function FinanzasPage() {
   const { hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
   const canCreate = hasPermission("finanzas.crear");
 
   const [localReceipts, setLocalReceipts] = useState<Receipt[]>(receipts);

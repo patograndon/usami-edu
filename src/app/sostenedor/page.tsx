@@ -10,9 +10,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
-  tenantsSaaS, liquidaciones, leaveRequests, sedeMetrics,
-  usuarios, auditLogs,
+  liquidaciones, leaveRequests, sedeMetrics,
+  auditLogs,
 } from "@/data/mock";
+import { useTenantsList } from "@/hooks/useTenants";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import {
   PLAN_LABELS, ROLE_LABELS, LEAVE_TYPE_LABELS, LEAVE_STATUS_LABELS,
@@ -41,6 +43,8 @@ function fmt(n: number) { return "$" + n.toLocaleString("es-CL"); }
 
 export default function SostenedorPage() {
   const { currentUser } = useAuth();
+  const { data: tenantsSaaS } = useTenantsList();
+  const { data: usuarios } = useUsers();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [localLiquidaciones, setLocalLiquidaciones] = useState<Liquidacion[]>(liquidaciones);
   const [localLeaves, setLocalLeaves] = useState<LeaveRequest[]>(leaveRequests);

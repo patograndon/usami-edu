@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Clock, LogIn, LogOut, QrCode, Monitor } from "lucide-react";
-import { staffAttendanceRecords, usuarios } from "@/data/mock";
+import { staffAttendanceRecords } from "@/data/mock";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { ROLE_LABELS } from "@/types";
@@ -11,6 +12,7 @@ import type { StaffAttendance } from "@/types";
 export default function RrhhPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: usuarios } = useUsers();
   const canView = hasPermission("rrhh.ver");
   const isDirector = currentUser.role === "director";
 

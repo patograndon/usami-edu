@@ -5,7 +5,10 @@ import {
   Send, Heart, Truck, GraduationCap, MessageSquare,
   ChevronRight, Edit3, Check, Clock, Eye,
 } from "lucide-react";
-import { alumnos, cursos, notificationTemplates, smartNotifications, usuarios } from "@/data/mock";
+import { notificationTemplates, smartNotifications } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import {
@@ -35,6 +38,9 @@ type Step = "category" | "template" | "compose" | "preview" | "sent";
 export default function EnviarNotificacionPage() {
   const { currentUser } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
+  const { data: usuarios } = useUsers();
 
   const [step, setStep] = useState<Step>("category");
   const [selectedCategory, setSelectedCategory] = useState<NotificationCategory | null>(null);

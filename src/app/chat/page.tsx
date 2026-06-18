@@ -5,7 +5,8 @@ import {
   Send, Image, Check, CheckCheck, Eye, Clock,
   MessageCircle, User, Paperclip, Lock,
 } from "lucide-react";
-import { chatConversations, chatMessages, usuarios } from "@/data/mock";
+import { chatConversations, chatMessages } from "@/data/mock";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { MESSAGE_STATUS_LABELS, ROLE_LABELS } from "@/types";
@@ -20,6 +21,7 @@ const STATUS_ICONS: Record<MessageStatus, { icon: typeof Check; color: string }>
 export default function ChatPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: usuarios } = useUsers();
   const canChat = hasPermission("chat.enviar");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { UtensilsCrossed, Plus, Save, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { menusSemanal, cursos } from "@/data/mock";
+import { menusSemanal } from "@/data/mock";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { DIA_LABELS } from "@/types";
@@ -15,6 +16,7 @@ const COMIDA_LABELS_MAP = { desayuno: "Desayuno", almuerzo: "Almuerzo", once: "O
 export default function NutricionPage() {
   const { hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: cursos } = useCourses();
   const canCreate = hasPermission("menus.crear");
 
   const [localMenus, setLocalMenus] = useState<MenuSemanal[]>(menusSemanal);

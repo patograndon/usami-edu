@@ -5,7 +5,8 @@ import {
   MessageCircle, X, Minus, Send, Check, CheckCheck,
   Paperclip, Image, ChevronLeft, Lock,
 } from "lucide-react";
-import { chatConversations, chatMessages, usuarios } from "@/data/mock";
+import { chatConversations, chatMessages } from "@/data/mock";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import type { ChatConversation, ChatMessage, MessageStatus } from "@/types";
@@ -19,6 +20,7 @@ const STATUS_ICONS: Record<MessageStatus, { icon: typeof Check; color: string }>
 export default function ChatWidget() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: usuarios } = useUsers();
   const canChat = hasPermission("chat.enviar") || currentUser.role === "director";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

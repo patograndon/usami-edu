@@ -11,7 +11,10 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
-import { alumnos, cursos, dailyLogEntries, usuarios } from "@/data/mock";
+import { dailyLogEntries } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { useClientDate } from "@/hooks/useClientDate";
@@ -44,6 +47,9 @@ const CATEGORY_CONFIG: Record<DailyLogCategory, { label: string; icon: typeof Ut
 export default function DiarioPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
+  const { data: usuarios } = useUsers();
 
   const isDirector = currentUser.role === "director";
   const canRegister = hasPermission("diario.registrar");
@@ -354,6 +360,9 @@ export default function DiarioPage() {
 }
 
 function DirectorAuditView({ entries }: { entries: DailyLogEntry[] }) {
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
+  const { data: usuarios } = useUsers();
   const [filterCurso, setFilterCurso] = useState("");
   const [filterDate, setFilterDate] = useState("2026-06-16");
   const [filterCategory, setFilterCategory] = useState<DailyLogCategory | "">("");

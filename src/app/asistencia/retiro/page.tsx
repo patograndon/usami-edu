@@ -13,11 +13,11 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-  alumnos,
   validateQrHash,
   getAuthorizedRetireesForStudent,
   retirementLogs,
 } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import type { AuthorizedRetiree, RetirementLog } from "@/types";
@@ -27,6 +27,7 @@ type RetiroStep = "scan" | "verified" | "rejected" | "confirmed";
 export default function RetiroPage() {
   const { currentUser } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
 
   const [step, setStep] = useState<RetiroStep>("scan");
   const [qrInput, setQrInput] = useState("");

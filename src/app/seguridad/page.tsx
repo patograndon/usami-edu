@@ -7,7 +7,8 @@ import {
   BarChart3,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { securityLogs, staffAttendanceRecords, usuarios } from "@/data/mock";
+import { securityLogs, staffAttendanceRecords } from "@/data/mock";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { SECURITY_TYPE_LABELS, SECURITY_ROLE_LABELS, ROLE_LABELS } from "@/types";
 import type { SecurityLog, SecurityRole } from "@/types";
@@ -16,6 +17,7 @@ type TabId = "personal" | "visitas" | "retiros";
 
 export default function SeguridadAuditoriaPage() {
   const { currentUser, hasPermission } = useAuth();
+  const { data: usuarios } = useUsers();
   const [activeTab, setActiveTab] = useState<TabId>("personal");
   const [localLogs] = useState<SecurityLog[]>(securityLogs);
 

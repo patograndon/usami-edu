@@ -11,7 +11,9 @@ import {
   Stethoscope,
   Shield,
 } from "lucide-react";
-import { alumnos, cursos, decreto170Records, fueiRecords, tenantConfig } from "@/data/mock";
+import { decreto170Records, fueiRecords } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import {
@@ -23,6 +25,8 @@ import type { FueiRecord, NeeType } from "@/types";
 export default function FueiPage() {
   const { currentUser } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
   const printRef = useRef<HTMLDivElement>(null);
 
   const alumnosD170 = useMemo(

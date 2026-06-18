@@ -6,7 +6,9 @@ import {
   Smartphone, Monitor, Shield, Clock, Eye, Settings,
   UserCheck, Mail, ClipboardList, Siren, TrendingDown, FileText, CalendarDays,
 } from "lucide-react";
-import { notifications, deviceTokens, alumnos, usuarios } from "@/data/mock";
+import { notifications, deviceTokens } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import {
@@ -37,6 +39,8 @@ const STATUS_DISPLAY: Record<NotificationStatus, { label: string; icon: typeof C
 export default function NotificacionesPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: usuarios } = useUsers();
   const canSend = hasPermission("notificaciones.enviar");
 
   const [localNotifs, setLocalNotifs] = useState<NotifType[]>(notifications);

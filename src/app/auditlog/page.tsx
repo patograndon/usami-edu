@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Shield, Lock, Database, Eye } from "lucide-react";
-import { detailedAuditLogs, tenantsSaaS } from "@/data/mock";
+import { detailedAuditLogs } from "@/data/mock";
+import { useTenantsList } from "@/hooks/useTenants";
 import { useAuth } from "@/context/AuthContext";
 import type { DetailedAuditLog } from "@/types";
 
@@ -14,6 +15,7 @@ const ACTION_COLORS: Record<string, string> = {
 
 export default function AuditLogPage() {
   const { currentUser, hasPermission } = useAuth();
+  const { data: tenantsSaaS } = useTenantsList();
 
   if (!hasPermission("auditlog.ver")) {
     return (

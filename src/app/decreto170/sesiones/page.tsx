@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { Lock, Save, Stethoscope, Clock, Target } from "lucide-react";
-import { alumnos, specialistSessions, decreto170Records } from "@/data/mock";
+import { specialistSessions, decreto170Records } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { LOGRO_LABELS, SESSION_TYPE_LABELS } from "@/types";
@@ -21,6 +22,7 @@ const LOGRO_COLORS: Record<LogroNivel, string> = {
 export default function SesionesPage() {
   const { currentUser } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
 
   const [localSessions, setLocalSessions] = useState<SpecialistSession[]>(specialistSessions);
   const [showForm, setShowForm] = useState(false);

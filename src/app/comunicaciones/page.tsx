@@ -3,7 +3,8 @@
 import { useState, useMemo } from "react";
 import { Send, Plus, X, Save, BarChart3, Mail, ClipboardList } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { communications, cursos } from "@/data/mock";
+import { communications } from "@/data/mock";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { getCursoDisplayName, COMM_TYPE_LABELS } from "@/types";
@@ -12,6 +13,7 @@ import type { Communication, CommunicationType, TargetAudience, SurveyQuestion }
 export default function ComunicacionesPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: cursos } = useCourses();
   const canCreate = hasPermission("comunicaciones.crear");
 
   const [localComms, setLocalComms] = useState<Communication[]>(communications);

@@ -6,13 +6,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { alumnos, cursos, attendanceRecords, decreto170Records, getMonthlyAttendanceStats } from "@/data/mock";
+import { attendanceRecords, decreto170Records, getMonthlyAttendanceStats } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
 import { getCursoInformeName, getCursoDisplayName, NIVELES_LABELS } from "@/types";
 import type { NivelEducativo } from "@/types";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4", "#ec4899"];
 
 export default function ReportesPage() {
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
   const [selectedCurso, setSelectedCurso] = useState("");
 
   const matriculaPorCurso = useMemo(() =>

@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { Star, Plus, Save, X, Lock } from "lucide-react";
-import { alumnos, cursos, usuarios } from "@/data/mock";
+import { usuarios } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { getCursoDisplayName, getCursoInformeName, NIVELES_LABELS } from "@/types";
@@ -53,6 +55,8 @@ const mockEvaluaciones: Evaluacion[] = [
 export default function EvaluacionesPage() {
   const { currentUser } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
 
   const [localEvals, setLocalEvals] = useState<Evaluacion[]>(mockEvaluaciones);
   const [filterCurso, setFilterCurso] = useState("");

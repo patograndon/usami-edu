@@ -11,7 +11,8 @@ import {
   Globe,
   Lock,
 } from "lucide-react";
-import { schoolEvents, cursos } from "@/data/mock";
+import { schoolEvents } from "@/data/mock";
+import { useCourses } from "@/hooks/useCourses";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { getCursoDisplayName } from "@/types";
@@ -23,6 +24,7 @@ const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 export default function CalendarioPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: cursos } = useCourses();
   const canCreate = hasPermission("calendario.crear");
 
   const [localEvents, setLocalEvents] = useState<SchoolEvent[]>(schoolEvents);

@@ -11,9 +11,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  alumnos, cursos, decreto170Records, specialistSessions,
+  decreto170Records, specialistSessions,
   getDecreto170Alerts, getSessionsForStudent, usuarios,
 } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
 import { useTenant } from "@/context/TenantContext";
 import {
   LOGRO_LABELS, SESSION_TYPE_LABELS, NEE_LABELS,
@@ -39,6 +41,8 @@ const SEMAFORO_STYLES = {
 
 export default function Decreto170Page() {
   const { modulosHabilitados } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
   const alerts = useMemo(() => getDecreto170Alerts(), []);
 
   if (!modulosHabilitados.decreto170) {

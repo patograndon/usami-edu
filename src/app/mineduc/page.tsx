@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { Download, FileSpreadsheet, Shield, Clock, AlertTriangle } from "lucide-react";
-import { alumnos, cursos, attendanceRecords, decreto170Records, usuarios } from "@/data/mock";
+import { attendanceRecords, decreto170Records } from "@/data/mock";
+import { useStudents } from "@/hooks/useStudents";
+import { useCourses } from "@/hooks/useCourses";
+import { useUsers } from "@/hooks/useUsers";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { MINEDUC_REPORT_LABELS, getCursoInformeName } from "@/types";
@@ -18,6 +21,9 @@ const REPORTS: { type: MINEDUCReportType; description: string; format: string }[
 export default function MINEDUCPage() {
   const { currentUser, hasPermission } = useAuth();
   const { tenant } = useTenant();
+  const { data: alumnos } = useStudents();
+  const { data: cursos } = useCourses();
+  const { data: usuarios } = useUsers();
   const [generating, setGenerating] = useState<string | null>(null);
   const [generated, setGenerated] = useState<string[]>([]);
 

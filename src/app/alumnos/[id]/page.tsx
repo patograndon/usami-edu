@@ -5,11 +5,13 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import FichaAlumno from "@/components/alumnos/ficha/FichaAlumno";
 import { getAlumnoById } from "@/data/mock";
+import { useStudentById } from "@/hooks/useStudents";
 import { useTenant } from "@/context/TenantContext";
 
 export default function AlumnoFichaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const alumno = getAlumnoById(id);
+  const { data: apiAlumno } = useStudentById(id);
+  const alumno = apiAlumno || getAlumnoById(id);
   const { modulosHabilitados, loaded } = useTenant();
 
   if (!alumno) {
