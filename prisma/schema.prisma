@@ -1,0 +1,766 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Multi-Tenancy ───
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  rbd       String   @unique
+  address   String
+  comuna    String
+  region    String
+  phone     String
+  email     String
+  modality  Modality @default(JARDIN_INFANTIL)
+  plan      Plan     @default(BASICO)
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users          User[]
+  students       Student[]
+  courses        Course[]
+  featureConfigs FeatureConfig[]
+  auditLogs      AuditLog[]
+  communications Communication[]
+  menus          WeeklyMenu[]
+  receipts       Receipt[]
+  securityLogs   SecurityLog[]
+  chatMessages   ChatMessage[]
+  notifications  Notification[]
+  supportTickets SupportTicket[]
+}
+
+enum Modality {
+  JARDIN_INFANTIL
+  ESCUELA_LENGUAJE
+}
+
+enum Plan {
+  BASICO
+  PROFESIONAL
+  ENTERPRISE
+}
+
+// ─── Feature Flags ───
+
+model FeatureConfig {
+  id        String  @id @default(cuid())
+  tenantId  String
+  moduleKey String
+  enabled   Boolean @default(false)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, moduleKey])
+}
+
+// ─── Users & Roles ───
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  fullName     String
+  rut          String
+  role         UserRole
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  permissions        UserPermission[]
+  courseAssignments   CourseAssignment[]
+  deviceTokens       DeviceToken[]
+  staffAttendance    StaffAttendance[]
+  sentNotifications  Notification[]      @relation("SentBy")
+  sentMessages       ChatMessage[]       @relation("MessageSender")
+  auditLogs          AuditLog[]
+  dailyLogs          DailyLogEntry[]     @relation("RegisteredBy")
+  dailyLogApprovals  DailyLogEntry[]     @relation("ApprovedBy")
+  evaluations        Evaluation[]
+  specialistSessions SpecialistSession[]
+  securityLogs       SecurityLog[]       @relation("RegisteredByUser")
+  performanceNotes   PerformanceNote[]   @relation("NoteAbout")
+  performanceAuthors PerformanceNote[]   @relation("NoteAuthor")
+
+  @@unique([tenantId, email])
+}
+
+enum UserRole {
+  SUPERADMIN
+  DIRECTOR
+  EDUCADORA
+  ASISTENTE
+  FONOAUDIOLOGO
+  PSICOLOGO
+  TERAPEUTA_OCUPACIONAL
+  ASISTENTE_SOCIAL
+  MEDICO
+  NUTRICIONISTA
+  ENCARGADO_CONVIVENCIA
+  ADMINISTRATIVO
+  SECURITY_GATE
+}
+
+model UserPermission {
+  id            String @id @default(cuid())
+  userId        String
+  permissionKey String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, permissionKey])
+}
+
+// ─── Courses ───
+
+model Course {
+  id             String       @id @default(cuid())
+  tenantId       String
+  officialLevel  OfficialLevel
+  creativeName   String?
+  year           Int
+  capacity       Int
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id])
+  students    Student[]
+  assignments CourseAssignment[]
+  dailyLogs   DailyLogEntry[]
+  evaluations Evaluation[]
+  attendance  AttendanceRecord[]
+  events      SchoolEvent[]
+}
+
+model CourseAssignment {
+  id       String @id @default(cuid())
+  userId   String
+  courseId  String
+  role     String
+
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+enum OfficialLevel {
+  SALA_CUNA_MENOR
+  SALA_CUNA_MAYOR
+  MEDIO_MENOR
+  MEDIO_MAYOR
+  NT1
+  NT2
+}
+
+// ─── Students ───
+
+model Student {
+  id              String   @id @default(cuid())
+  tenantId        String
+  rut             String
+  firstName       String
+  lastName        String
+  motherLastName  String
+  birthDate       DateTime
+  gender          Gender
+  nationality     String   @default("Chilena")
+  courseId         String?
+  qrCode          String   @unique
+  enrollmentDate  DateTime @default(now())
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant           Tenant              @relation(fields: [tenantId], references: [id])
+  course           Course?             @relation(fields: [courseId], references: [id])
+  healthRecord     HealthRecord?
+  guardians        GuardianLink[]
+  emergencyContacts EmergencyContact[]
+  familyMembers    FamilyMember[]
+  attendance       AttendanceRecord[]
+  dailyLogs        DailyLogEntry[]
+  evaluations      Evaluation[]
+  clinicalProfile  ClinicalProfile?
+  retirementLogs   RetirementLog[]
+  receipts         Receipt[]
+  notifications    Notification[]      @relation("StudentNotif")
+
+  @@unique([tenantId, rut])
+}
+
+enum Gender {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+// ─── Health ───
+
+model HealthRecord {
+  id                String   @id @default(cuid())
+  studentId         String   @unique
+  generalCondition  String?
+  bloodType         String?
+  allergies         String[] @default([])
+  allergiesDetail   String?
+  chronicConditions String[] @default([])
+  vaccinesUpToDate  Boolean  @default(false)
+  medicalHistory    String?
+  observations      String?
+  healthInsurance   String?
+  referralHospital  String?
+
+  authFirstAid          Boolean @default(false)
+  authEmergencyTransfer Boolean @default(false)
+  authImageUse          Boolean @default(false)
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  student     Student      @relation(fields: [studentId], references: [id])
+  medications Medication[]
+}
+
+model Medication {
+  id             String  @id @default(cuid())
+  healthRecordId String
+  name           String
+  dose           String
+  frequency      String
+  adminTime      String
+  prescriptionAttached Boolean @default(false)
+
+  healthRecord HealthRecord @relation(fields: [healthRecordId], references: [id])
+}
+
+// ─── Family & Guardians ───
+
+model GuardianLink {
+  id           String @id @default(cuid())
+  studentId    String
+  guardianRut  String
+  guardianName String
+  relationship String
+  phone        String
+  email        String?
+  isPrimary    Boolean @default(false)
+  qrHash       String?
+  canPickup    Boolean @default(true)
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([guardianRut])
+}
+
+model EmergencyContact {
+  id          String  @id @default(cuid())
+  studentId   String
+  fullName    String
+  relationship String
+  phone       String
+  canPickup   Boolean @default(false)
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+model FamilyMember {
+  id           String  @id @default(cuid())
+  studentId    String
+  name         String
+  relationship String
+  age          Int
+  livesWithStudent Boolean @default(true)
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+// ─── Attendance ───
+
+model AttendanceRecord {
+  id           String           @id @default(cuid())
+  tenantId     String
+  studentId    String
+  courseId     String
+  date         DateTime         @db.Date
+  status       AttendanceStatus
+  checkInTime  String?
+  registeredBy String
+  registeredAt DateTime         @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+  course  Course  @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, date])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+}
+
+// ─── Security Log ───
+
+model SecurityLog {
+  id             String       @id @default(cuid())
+  tenantId       String
+  personName     String
+  personRut      String
+  type           SecurityType
+  role           SecurityRole
+  photoUrl       String?
+  timestamp      DateTime     @default(now())
+  method         String
+  relatedStudentId String?
+  verified       Boolean      @default(false)
+  registeredById String
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id])
+  registeredBy User   @relation("RegisteredByUser", fields: [registeredById], references: [id])
+}
+
+enum SecurityType {
+  ENTRY
+  EXIT
+}
+
+enum SecurityRole {
+  STAFF
+  PARENT
+  VISITOR
+}
+
+model RetirementLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  studentId      String
+  authorizedById String
+  retireeName    String
+  retireeRut     String
+  retireeRelation String
+  timestamp      DateTime @default(now())
+  qrVerified     Boolean  @default(false)
+
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+// ─── Daily Log (Diario de Aula) ───
+
+model DailyLogEntry {
+  id               String         @id @default(cuid())
+  tenantId         String
+  studentId        String
+  courseId          String
+  date             DateTime       @db.Date
+  category         DailyLogCategory
+  timestamp        DateTime       @default(now())
+  registeredById   String
+  registeredByRole UserRole
+  approvalStatus   ApprovalStatus @default(PENDING)
+  approvedById     String?
+  approvedAt       DateTime?
+  data             Json
+
+  student      Student @relation(fields: [studentId], references: [id])
+  course       Course  @relation(fields: [courseId], references: [id])
+  registeredBy User    @relation("RegisteredBy", fields: [registeredById], references: [id])
+  approvedBy   User?   @relation("ApprovedBy", fields: [approvedById], references: [id])
+}
+
+enum DailyLogCategory {
+  COMIDA
+  SIESTA
+  HIGIENE
+  ACTIVIDAD
+  OBSERVACION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ─── Evaluations ───
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  tenantId    String
+  studentId   String
+  courseId     String
+  domain      String
+  milestone   String
+  level       Int
+  observation String?
+  date        DateTime @db.Date
+  evaluatorId String
+  locked      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  student   Student @relation(fields: [studentId], references: [id])
+  course    Course  @relation(fields: [courseId], references: [id])
+  evaluator User    @relation(fields: [evaluatorId], references: [id])
+}
+
+// ─── Decreto 170 / Clinical ───
+
+model ClinicalProfile {
+  id                  String   @id @default(cuid())
+  studentId           String   @unique
+  diagnosisCie10      String
+  diagnosisDescription String
+  neeType             NeeType
+  evaluationDate      DateTime
+  pieEntryDate        DateTime
+  reevaluationDate    DateTime
+  evaluatingProfessional String
+  locked              Boolean  @default(false)
+
+  student  Student            @relation(fields: [studentId], references: [id])
+  fuei     FueiRecord?
+  sessions SpecialistSession[]
+}
+
+enum NeeType {
+  TRANSITORIA
+  PERMANENTE
+}
+
+model FueiRecord {
+  id                String   @id @default(cuid())
+  clinicalProfileId String   @unique
+  year              Int
+  specializedSupports String[]
+  curricularAdaptations String?
+  additionalResources   String?
+  guardianName      String
+  guardianRut       String
+  guardianSigned    Boolean @default(false)
+  locked            Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  clinicalProfile ClinicalProfile @relation(fields: [clinicalProfileId], references: [id])
+}
+
+model SpecialistSession {
+  id              String      @id @default(cuid())
+  tenantId        String
+  studentId       String
+  specialistId    String
+  specialistRole  UserRole
+  type            SessionType
+  date            DateTime    @db.Date
+  durationMinutes Int
+  objective       String
+  activitySummary String
+  achievementLevel Int
+  observations    String?
+  locked          Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+
+  clinicalProfile ClinicalProfile? @relation(fields: [studentId], references: [studentId])
+  specialist      User              @relation(fields: [specialistId], references: [id])
+}
+
+enum SessionType {
+  INDIVIDUAL
+  GRUPAL
+}
+
+// ─── Calendar ───
+
+model SchoolEvent {
+  id          String    @id @default(cuid())
+  tenantId    String
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  type        EventType
+  courseId     String?
+  isPublic    Boolean   @default(true)
+  createdBy   String
+
+  course Course? @relation(fields: [courseId], references: [id])
+}
+
+enum EventType {
+  REUNION
+  ACTIVIDAD_ESCOLAR
+  HITO
+  FERIADO
+}
+
+// ─── Communications ───
+
+model Communication {
+  id             String            @id @default(cuid())
+  tenantId       String
+  title          String
+  body           String
+  type           CommunicationType
+  targetAudience String
+  targetCourseId String?
+  publishedAt    DateTime          @default(now())
+  createdBy      String
+
+  tenant    Tenant           @relation(fields: [tenantId], references: [id])
+  questions SurveyQuestion[]
+}
+
+enum CommunicationType {
+  CIRCULAR
+  ENCUESTA
+}
+
+model SurveyQuestion {
+  id              String   @id @default(cuid())
+  communicationId String
+  question        String
+  options         String[]
+  responses       Json     @default("{}")
+
+  communication Communication @relation(fields: [communicationId], references: [id])
+}
+
+// ─── Notifications ───
+
+model Notification {
+  id              String             @id @default(cuid())
+  tenantId        String
+  event           String
+  priority        NotificationPriority
+  title           String
+  body            String
+  templateId      String?
+  category        String?
+  recipientUserId String?
+  recipientRole   String?
+  relatedStudentId String?
+  status          NotificationStatus @default(SENT)
+  sentAt          DateTime           @default(now())
+  readAt          DateTime?
+  sentById        String
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  sentBy         User     @relation("SentBy", fields: [sentById], references: [id])
+  relatedStudent Student? @relation("StudentNotif", fields: [relatedStudentId], references: [id])
+}
+
+model NotificationTemplate {
+  id          String @id @default(cuid())
+  category    String
+  title       String
+  messageBody String
+  variables   String[]
+}
+
+model DeviceToken {
+  id          String   @id @default(cuid())
+  userId      String
+  fcmToken    String   @unique
+  deviceType  String
+  lastUpdated DateTime @default(now())
+  isActive    Boolean  @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum NotificationPriority {
+  HIGH
+  NORMAL
+}
+
+enum NotificationStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+// ─── Chat ───
+
+model ChatConversation {
+  id               String   @id @default(cuid())
+  tenantId         String
+  relatedStudentId String?
+  createdAt        DateTime @default(now())
+
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+}
+
+model ChatParticipant {
+  id             String @id @default(cuid())
+  conversationId String
+  userId         String
+  role           String
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([conversationId, userId])
+}
+
+model ChatMessage {
+  id              String        @id @default(cuid())
+  conversationId  String
+  tenantId        String
+  senderId        String
+  body            String
+  imageUrl        String?
+  imageCompressed Boolean       @default(false)
+  status          MessageStatus @default(SENT)
+  sentAt          DateTime      @default(now())
+  deliveredAt     DateTime?
+  readAt          DateTime?
+
+  conversation ChatConversation @relation(fields: [conversationId], references: [id])
+  tenant       Tenant           @relation(fields: [tenantId], references: [id])
+  sender       User             @relation("MessageSender", fields: [senderId], references: [id])
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+// ─── Nutrition ───
+
+model WeeklyMenu {
+  id         String   @id @default(cuid())
+  tenantId   String
+  weekStart  DateTime @db.Date
+  weekEnd    DateTime @db.Date
+  courseId    String?
+  createdBy  String
+  createdAt  DateTime @default(now())
+
+  tenant Tenant     @relation(fields: [tenantId], references: [id])
+  days   MenuDay[]
+}
+
+model MenuDay {
+  id         String @id @default(cuid())
+  menuId     String
+  dayOfWeek  Int
+  breakfast  String?
+  lunch      String?
+  snack      String?
+  colacion   String?
+
+  menu WeeklyMenu @relation(fields: [menuId], references: [id])
+}
+
+// ─── HR ───
+
+model StaffAttendance {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String
+  date           DateTime @db.Date
+  checkIn        String?
+  checkOut       String?
+  method         String
+  hoursWorked    Float?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model PerformanceNote {
+  id        String   @id @default(cuid())
+  aboutId   String
+  authorId  String
+  note      String
+  isPrivate Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  about  User @relation("NoteAbout", fields: [aboutId], references: [id])
+  author User @relation("NoteAuthor", fields: [authorId], references: [id])
+}
+
+// ─── Finance ───
+
+model Receipt {
+  id             String        @id @default(cuid())
+  tenantId       String
+  studentId      String
+  type           ReceiptType
+  description    String
+  amount         Int
+  issueDate      DateTime      @db.Date
+  dueDate        DateTime      @db.Date
+  status         PaymentStatus @default(PENDIENTE)
+  folio          String        @unique
+  createdBy      String
+  createdAt      DateTime      @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+}
+
+enum ReceiptType {
+  MATRICULA
+  MENSUALIDAD
+  MATERIAL
+  OTRO
+}
+
+enum PaymentStatus {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+  ANULADO
+}
+
+// ─── Audit ───
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  action    String
+  detail    String?
+  ip        String?
+  timestamp DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, timestamp])
+}
+
+// ─── Support ───
+
+model SupportTicket {
+  id          String       @id @default(cuid())
+  tenantId    String
+  subject     String
+  description String
+  status      TicketStatus @default(ABIERTO)
+  createdBy   String
+  createdAt   DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+enum TicketStatus {
+  ABIERTO
+  EN_PROGRESO
+  RESUELTO
+}
