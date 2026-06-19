@@ -37,6 +37,7 @@ model Tenant {
   chatMessages   ChatMessage[]
   notifications  Notification[]
   supportTickets SupportTicket[]
+  sostenedores   SostenedorTenant[]
 }
 
 enum Modality {
@@ -78,6 +79,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  managedTenants     SostenedorTenant[]
   permissions        UserPermission[]
   courseAssignments   CourseAssignment[]
   deviceTokens       DeviceToken[]
@@ -98,6 +100,7 @@ model User {
 
 enum UserRole {
   SUPERADMIN
+  SOSTENEDOR
   DIRECTOR
   EDUCADORA
   ASISTENTE
@@ -120,6 +123,19 @@ model UserPermission {
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, permissionKey])
+}
+
+// ─── Sostenedor ↔ Multiple Tenants ───
+
+model SostenedorTenant {
+  id       String @id @default(cuid())
+  userId   String
+  tenantId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([userId, tenantId])
 }
 
 // ─── Courses ───

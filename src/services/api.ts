@@ -1,6 +1,24 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 let authToken: string | null = null;
+let activeTenantId: string | null = null;
+
+export function setActiveTenant(tenantId: string | null) {
+  activeTenantId = tenantId;
+  if (tenantId) {
+    localStorage.setItem("usami_active_tenant", tenantId);
+  } else {
+    localStorage.removeItem("usami_active_tenant");
+  }
+}
+
+export function getActiveTenant(): string | null {
+  if (activeTenantId) return activeTenantId;
+  if (typeof window !== "undefined") {
+    activeTenantId = localStorage.getItem("usami_active_tenant");
+  }
+  return activeTenantId;
+}
 
 export function setAuthToken(token: string | null) {
   authToken = token;
@@ -21,12 +39,16 @@ export function getAuthToken(): string | null {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAuthToken();
+  const tenant = getActiveTenant();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),
   };
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+  }
+  if (tenant) {
+    headers["X-Tenant-Id"] = tenant;
   }
 
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
@@ -63,6 +85,11 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 export function logout() {
   setAuthToken(null);
+  setActiveTenant(null);
+}
+
+export async function getMyTenants(): Promise<{ id: string; name: string; rbd: string; comuna: string }[]> {
+  return request("/auth/me/tenants");
 }
 
 // ─── Students ───

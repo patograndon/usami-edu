@@ -44,6 +44,36 @@ export class AuthService {
     };
   }
 
+  async getMyTenants(userId: string, role: string, homeTenantId: string) {
+    if (role === 'SUPERADMIN') {
+      return this.prisma.tenant.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, rbd: true, comuna: true },
+        orderBy: { name: 'asc' },
+      });
+    }
+    if (role === 'SOSTENEDOR') {
+      const links = await this.prisma.sostenedorTenant.findMany({
+        where: { userId },
+        include: { tenant: { select: { id: true, name: true, rbd: true, comuna: true } } },
+      });
+      const tenants = links.map((l) => l.tenant);
+      const home = await this.prisma.tenant.findUnique({
+        where: { id: homeTenantId },
+        select: { id: true, name: true, rbd: true, comuna: true },
+      });
+      if (home && !tenants.some((t) => t.id === home.id)) {
+        tenants.unshift(home);
+      }
+      return tenants;
+    }
+    const home = await this.prisma.tenant.findUnique({
+      where: { id: homeTenantId },
+      select: { id: true, name: true, rbd: true, comuna: true },
+    });
+    return home ? [home] : [];
+  }
+
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 10);
   }

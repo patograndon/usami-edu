@@ -7,10 +7,19 @@ import {
   setAuthToken,
   getAuthToken,
   logout as apiLogout,
+  getMyTenants,
+  setActiveTenant,
+  getActiveTenant,
 } from "@/services/api";
-import { mapApiUser } from "@/services/mappers";
 import type { User, PermissionKey } from "@/types";
 import { DEFAULT_PERMISSIONS } from "@/types";
+
+interface TenantOption {
+  id: string;
+  name: string;
+  rbd: string;
+  comuna: string;
+}
 
 interface AuthContextValue {
   currentUser: User;
@@ -21,6 +30,9 @@ interface AuthContextValue {
   loginWithApi: (email: string, password: string) => Promise<boolean>;
   logoutUser: () => void;
   isApiConnected: boolean;
+  availableTenants: TenantOption[];
+  activeTenantId: string | null;
+  switchTenant: (tenantId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -28,6 +40,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User>(usuarios[0]);
   const [isApiConnected, setIsApiConnected] = useState(false);
+  const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
+  const [activeTenantId, setActiveTenantIdState] = useState<string | null>(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -36,9 +50,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const stored = localStorage.getItem("usami_user");
       if (stored) {
         try {
-          setCurrentUser(JSON.parse(stored));
+          const user = JSON.parse(stored);
+          setCurrentUser(user);
+          const savedTenant = getActiveTenant();
+          setActiveTenantIdState(savedTenant || user.tenantId);
         } catch {}
       }
+      getMyTenants()
+        .then(setAvailableTenants)
+        .catch(() => {});
     }
   }, []);
 
@@ -49,6 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsApiConnected(false);
       apiLogout();
       localStorage.removeItem("usami_user");
+      setAvailableTenants([]);
+      setActiveTenantIdState(null);
     }
   }, []);
 
@@ -73,7 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setCurrentUser(apiUser);
         setIsApiConnected(true);
+        setActiveTenant(response.user.tenantId);
+        setActiveTenantIdState(response.user.tenantId);
         localStorage.setItem("usami_user", JSON.stringify(apiUser));
+
+        getMyTenants()
+          .then(setAvailableTenants)
+          .catch(() => {});
+
         return true;
       } catch {
         return false;
@@ -87,6 +116,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsApiConnected(false);
     setCurrentUser(usuarios[0]);
     localStorage.removeItem("usami_user");
+    setAvailableTenants([]);
+    setActiveTenantIdState(null);
+  }, []);
+
+  const switchTenant = useCallback((tenantId: string) => {
+    setActiveTenant(tenantId);
+    setActiveTenantIdState(tenantId);
   }, []);
 
   const hasPermission = useCallback(
@@ -110,6 +146,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithApi,
         logoutUser,
         isApiConnected,
+        availableTenants,
+        activeTenantId,
+        switchTenant,
       }}
     >
       {children}

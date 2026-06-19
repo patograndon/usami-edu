@@ -102,8 +102,10 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ academico: true });
   const pathname = usePathname();
-  const { hasPermission } = useAuth();
+  const { hasPermission, currentUser, availableTenants, activeTenantId, switchTenant, isApiConnected } = useAuth();
   const { esEscuelaLenguaje } = useTenant();
+  const showTenantSelector = isApiConnected && availableTenants.length > 1 &&
+    (currentUser.role === "sostenedor" || currentUser.role === "superadmin");
 
   function canSeeItem(item: NavItem): boolean {
     return item.requiredPermission === null ||
@@ -171,6 +173,25 @@ export default function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {showTenantSelector && !collapsed && (
+          <div className="border-b border-white/10 px-3 py-3">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              Establecimiento
+            </label>
+            <select
+              value={activeTenantId || ""}
+              onChange={(e) => { switchTenant(e.target.value); window.location.reload(); }}
+              className="w-full rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 text-xs font-medium text-white focus:border-primary-400 focus:outline-none"
+            >
+              {availableTenants.map((t) => (
+                <option key={t.id} value={t.id} className="text-gray-900">
+                  {t.name} ({t.rbd})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
           {navStructure.map((entry) => {
