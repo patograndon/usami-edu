@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantModule } from './modules/tenant/tenant.module';
@@ -43,5 +44,6 @@ import { AuditLogModule } from './modules/audit-log/audit-log.module';
     SecurityLogModule,
     AuditLogModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
